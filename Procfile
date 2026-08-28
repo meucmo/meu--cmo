@@ -1,0 +1,1 @@
+web: sh -c './apps/pocketbase/pocketbase serve --http=0.0.0.0:8090 --dir=apps/pocketbase/pb_data --migrationsDir=apps/pocketbase/pb_migrations --hooksDir=apps/pocketbase/pb_hooks --encryptionEnv=PB_ENCRYPTION_KEY & npm run start --prefix apps/api'

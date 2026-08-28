@@ -1,0 +1,19 @@
+{
+	"name": "api",
+	"type": "module",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "node --env-file-if-exists=.env --watch src/main.js",
+		"start": "node --env-file-if-exists=.env src/main.js",
+		"lint": "eslint . --config eslint.api.config.mjs"
+	},
+	"dependencies": {
+		"express": "^5.1.0",
+		"express-rate-limit": "^8.2.1",
+		"globals": "^17.11.0",
+		"http-proxy-middleware": "^4.2.0",
+		"multer": "^2.0.2",
+		"pocketbase": "^0.26.9"
+	}
+}

@@ -1,0 +1,67 @@
+import { Router } from 'express';
+import { ContentBlockType, stream, uploadImagesToPocketBase } from '../api/integrated-ai.js';
+import { buildCmoSystemPrompt } from '../constants/prompts.js';
+import pocketbaseClient from '../utils/pocketbaseClient.js';
+import { uploadFiles } from '../middleware/file-upload.js';
+import { integratedAiRateLimit } from '../middleware/integrated-ai-rate-limit.js';
+import { pocketbaseAuth } from '../middleware/pocketbase-auth.js';
+
+const router = Router();
+
+router.use(pocketbaseAuth);
+
+router.post('/stream', integratedAiRateLimit, uploadFiles({
+	allowedMimeTypes: [
+		'image/jpeg',
+		'image/png',
+		'image/webp',
+	],
+	fieldName: 'images',
+}), async (req, res) => {
+	const { message } = req.body;
+
+	if (!message) {
+		throw new Error('message is required');
+	}
+
+	if (typeof message !== 'string') {
+		return res.status(400).json({ error: 'message must be a string' });
+	}
+
+	const parsedMessage = JSON.parse(message);
+
+	if (req.files?.length > 0) {
+		const imageUrls = await uploadImagesToPocketBase({ images: req.files });
+		imageUrls.forEach((url) => {
+			parsedMessage.push({ type: ContentBlockType.Image, image: url });
+		});
+	}
+
+	let empresa = null;
+	try {
+		const result = await pocketbaseClient.collection('empresas').getList(1, 1, {
+			filter: pocketbaseClient.filter('owner = {:ownerId}', { ownerId: req.pocketbaseUserId }),
+			sort: '-created',
+		});
+		empresa = result.items[0] || null;
+	} catch {
+		// Best-effort personalization: fall back to the generic CMO persona.
+	}
+
+	const sseStream = await stream({
+		userId: req.pocketbaseUserId,
+		systemPrompt: buildCmoSystemPrompt({ empresa }),
+		userMessage: parsedMessage,
+	});
+
+	res.setHeader('Content-Type', 'text/event-stream');
+	res.setHeader('Cache-Control', 'no-cache');
+	res.setHeader('Connection', 'keep-alive');
+	res.setHeader('X-Accel-Buffering', 'no');
+
+	sseStream.pipe(res, { end: false });
+
+	res.on('close', () => sseStream.destroy());
+});
+
+export default router;
