@@ -187,6 +187,10 @@ function appendToken(url, token) {
  * Signs a stored image reference with a short-lived file token so the AI service can fetch it.
  * Handles both full URLs and origin-less `/api/files/...` paths.
  *
+ * Image references reach this from the browser unvalidated, and the token is
+ * superuser issued, so anything outside this site's own origin is returned
+ * unsigned rather than handing the token to a host the caller chose.
+ *
  * @param {string} reference
  * @param {string} token
  * @returns {string}
@@ -196,11 +200,20 @@ function signImageReference(reference, token) {
 		return reference;
 	}
 
+	const base = `https://${process.env.WEBSITE_DOMAIN}/hcgi/platform`;
+
 	if (/^https?:\/\//i.test(reference)) {
+		try {
+			if (new URL(reference).origin !== new URL(base).origin) {
+				return reference;
+			}
+		} catch {
+			return reference;
+		}
+
 		return appendToken(reference, token);
 	}
 
-	const base = `https://${process.env.WEBSITE_DOMAIN}/hcgi/platform`;
 	const path = reference.startsWith('/') ? reference : `/${reference}`;
 
 	return appendToken(`${base}${path}`, token);

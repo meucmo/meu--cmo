@@ -129,3 +129,10 @@
 - Installed `http-proxy-middleware` dependency in `apps/api`
 - Edited/created: apps/api/src/main.js, railway.json, Procfile, .env.example, RAILWAY_DEPLOY.md
 - App remains 100% functional; all 10 core features (onboarding, daily plans, healthcare mode, chat gating, idea bank, history, PWA, SaaS landing/pricing/legal, admin metrics) ready for Railway deployment
+
+##### 2026-08-28 01:45 UTC — "ERRO: REPOSITORY NOT FOUND NO RAILWAY"
+- Root cause: workspace is a Hostinger AI Builder sandbox (not a GitHub repository); Railway cannot clone code that doesn't exist on GitHub
+- Initialized local git repository, created `README.md`, and committed all code to `main` branch
+- **Next steps (user must perform on their machine)**: (1) create public/private repo on GitHub (`meu-cmo`), (2) clone sandbox code locally and push to GitHub (`git remote add origin https://github.com/YOUR_USER/meu-cmo.git && git push -u origin main`), (3) connect Railway to GitHub repo (authorize GitHub App if private/org repo), (4) follow `RAILWAY_DEPLOY.md` for environment variables and domain setup
+- App remains 100% functional in sandbox; deployment blocked only by GitHub push step
+- Edited/created: README.md, .git (local repository initialized)

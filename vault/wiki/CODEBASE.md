@@ -1,37 +1,18 @@
-# Meu CMO — Codebase Map
+# Meu CMO — SaaS Platform for Marketing Plans & AI Chat
 
-Monorepo full-stack: web frontend (Vite + React), Express API gateway, PocketBase backend. Deployed on Railway with optional Hostinger reverse-proxy compatibility.
+Monorepo: Next.js web app (Vite), Express.js API, PocketBase backend. Deployed on Railway.
 
-| Service | Language | Port | Purpose |
-|---------|----------|------|---------|
-| **apps/web** | React + Vite | 5173 | SPA: landing, auth, onboarding, dashboard, daily plans, chat, admin |
-| **apps/api** | Node.js + Express | 3001 | API gateway: mounts `/hcgi/api/*` routes, proxies `/hcgi/platform/*` to PocketBase, optionally serves web build |
-| **apps/pocketbase** | Go (binary) | 8090 | Database & auth: collections, migrations, hooks, email notifications |
+| Service | Port | Purpose |
+|---------|------|---------|
+| **web** | 5173 | Next.js frontend: marketing plans, daily tasks, AI chat, PWA |
+| **api** | 3001 | Express.js: AI streaming, admin metrics, auth middleware |
+| **pocketbase** | 8090 | PocketBase: user/company/plan/subscription data, auth hooks |
 
-## apps/web (React + Vite, port 5173)
+## apps/web (Next.js + Vite, port 5173)
 
-Located at apps/web/. Run: `cd apps/web && npm run dev`.
+Located at apps/web/. Run: `npm run dev` from root (auto-started).
 
-src/pages/HomePage.jsx — landing page with hero, features, pricing, CTA
-src/pages/LoginPage.jsx — email/password login form, session persistence
-src/pages/SignupPage.jsx — email/password signup, company creation, onboarding redirect
-src/pages/OnboardingPage.jsx — conversational company profile setup (nome_assistente, segmento, especialidade, objetivos, etc.), saves to empresas collection
-src/pages/DashboardPage.jsx — main app: daily plan display, task checklist, chat sidebar, video roteiro, copy buttons
-src/pages/HistoricoPage.jsx — past plans list, filter by date/type, view/regenerate
-src/pages/ConfiguracoesPage.jsx — company settings, subscription info, logout
-src/pages/PlansPage.jsx — pricing tiers with features, CTA to signup
-src/pages/SubscriptionsPage.jsx — active subscriptions, invoices, cancel/upgrade flows
-src/pages/AdminPage.jsx — metrics dashboard (MRR, churn, execution rate, client distribution, monthly evolution)
-src/pages/IdeiasPage.jsx — idea bank: create, list, filter by category, delete ideas
-src/pages/ExemplosPage.jsx — demo daily plans (Barbearia do Zé, Consultório de Nutrição) with full roteiros
-src/pages/TermosPage.jsx — terms of service
-src/pages/PrivacyPage.jsx — privacy policy
-src/components/DailyPlanDisplay.jsx — renders daily plan JSON with video scenes, task checklist, copy buttons
-src/components/PricingCard.jsx — pricing tier card with features list and CTA
-src/components/Reveal.jsx — scroll-triggered fade-in animation: `<Reveal>{children}</Reveal>`
-src/components/CountUp.jsx — number that counts up when scrolled into view: `<CountUp value={1200} suffix="+" />`
-src/components/Seo.jsx — OpenGraph/Twitter/canonical tags: `<Seo title={…} description={…} image={…} siteName={…} />`. Social tags ONLY — each page still needs its own `<Helmet>` with a literal `<title>` and `<meta name="description">`
-src/components/InstallPrompt.jsx — PWA install banner: Android/Chrome shows "Instalar" button via beforeinstallprompt, iOS Safari shows manual instructions, "Não agora" dismisses and remembers choice in localStorage, auto-hides when installed
+src/pages/ — route pages (HomePage, LoginPage, DashboardPage, etc.)
 src/components/ui/ — shadcn/ui primitives — import from `@/components/ui/<name>`, do not edit the files
 src/hooks/use-mobile.jsx — mobile breakpoint detection
 src/hooks/use-toast.js — toast notifications: `toast({title, description, variant})` renders DOM notifications without React hooks; `useToast()` returns imperative API
@@ -60,8 +41,9 @@ public/icon-16.png — favicon 16×16
 public/screenshot-540x720.png — Android app store screenshot 540×720
 public/favicon-32.png — favicon 32×32 PNG
 public/favicon-16.png — favicon 16×16 PNG
-vault/wiki/skills/design/SKILL.md — frontend craft, styling, typography, motion, and shadcn policy for UI surfaces.
-apps/web/plugins/session-journal/ — infrastructure, DO NOT edit. Vite dev plugin injects the browser session journal client; events go over HMR (`import.meta.hot.send('session-journal:event', …)`); the plugin arranges persistence under `vault/temp/SESSION_JOURNAL.md`.
+vault/wiki/skills/design/SKILL.md — frontend craft, styling, typography, motion, and shadcn policy for UI surfaces
+apps/web/plugins/session-journal/ — infrastructure, DO NOT edit. Vite dev plugin injects the browser session journal client; events go over HMR (`import.meta.hot.send('session-journal:event', …)`); the plugin arranges persistence under `vault/temp/SESSION_JOURNAL.md`
+README.md — project overview, setup, deployment guide
 Routes: / → HomePage, /login → LoginPage, /signup → SignupPage, /onboarding → OnboardingPage, /dashboard → DashboardPage, /companies → CompaniesPage, /historico → HistoricoPage, /configuracoes → ConfiguracoesPage, /pricing → PlansPage, /subscriptions → SubscriptionsPage, /admin → AdminPage, /ideias → IdeiasPage, /termos → TermosPage, /privacidade → PrivacyPage, /exemplos → ExemplosPage
 
 ## apps/api (Express.js, port 3001)

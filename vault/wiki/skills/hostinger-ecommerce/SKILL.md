@@ -55,10 +55,22 @@ Tailwind theme, shadcn/ui patterns, typography, radii, buttons.
 - **Checkout:** `initializeCheckout` with `variant_id`. Optional `customer: { external_id, email }` for PocketBase.
 - **Stock:** limit qty only when `manage_inventory === true` and qty > `inventory_quantity`.
 - **HTML:** controlled render for `description` and `additional_info[].description`.
+- **Appointments** (`product.type.value === "booking"`): never add to cart — render
+  the injected `BookingSlotPicker` and go straight to checkout. Checkout takes
+  exactly one item, `quantity: 1`, plus `time_slot` (a `slots[]` string passed
+  verbatim) and `time_zone`. `addToCart` rejects bookings by design; a list-page
+  "Book now" navigates to the detail page instead of adding.
 
 ## API shapes
 
 Trust injected `EcommerceApi.js` over this list: `getProducts`, `getProduct`,
-`getProductQuantities`, `getCategories`, `initializeCheckout`, `formatCurrency`;
-products expose `variants[]` with `manage_inventory`, `inventory_quantity`,
-`price_in_cents`, `currency`.
+`getProductQuantities`, `getCategories`, `initializeCheckout`, `formatCurrency`,
+`getAvailability`, `getTimeSlots`; products expose `variants[]` with
+`manage_inventory`, `inventory_quantity`, `price_in_cents`, `currency`, and
+`booking_event` (non-null only on appointment variants).
+
+Booking flow: `getAvailability({ bookingEventId, fromDate, toDate })` →
+`available_dates[]`, then `getTimeSlots({ bookingEventId, date })` → `slots[]` of
+`YYYY-MM-DDTHH:mm:ss` starts. The injected `useBookingAvailability` hook wraps
+both. `booking_event.length` and the buffer/notice fields are **milliseconds**;
+`*_unit` fields are display-only.

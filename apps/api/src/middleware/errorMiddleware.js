@@ -8,14 +8,8 @@ const errorMiddleware = (err, req, res, next) => {
 		return next(err);
 	}
 
-	// Respect an explicit status set on the error (e.g. 401 from pb-user,
-	// 403 from admin gate, 422 from input validation). Default to 500.
-	const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 600
-		? err.status
-		: 500;
-
-	res.status(status).json({
-		message: status >= 500 ? 'Something went wrong!' : err.message,
+	res.status(500).json({
+		message: 'Something went wrong!',
 		...(process.env.NODE_ENV !== NodeEnv.Production && {
 			error: {
 				name: err.name,

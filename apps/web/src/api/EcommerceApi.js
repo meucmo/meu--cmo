@@ -334,6 +334,38 @@ const getProductPrice = (product) => {
  * @property {string} variant_id - Product variant id
  * @property {number} quantity - Quantity to purchase (minimum 1)
  * @property {CheckoutItemCustomFieldValue[]} [custom_field_values] - Array of custom field values for this item
+ * @property {string} [time_slot] - Chosen appointment start, `YYYY-MM-DDTHH:mm:ss` (required for booking variants)
+ * @property {string} [time_zone] - IANA time zone the `time_slot` is expressed in (required for booking variants)
+ */
+
+/**
+ * @typedef {Object} GetAvailabilityParams
+ * @property {string} bookingEventId - Booking event id from `variant.booking_event.id` (required)
+ * @property {string} fromDate - First day of the range, `YYYY-MM-DD` (required)
+ * @property {string} toDate - Last day of the range, `YYYY-MM-DD`, at most 366 days after fromDate (required)
+ * @property {string} [timeZone] - IANA time zone; defaults to the visitor's browser time zone
+ * @property {string} [excludeBookingId] - Existing booking to ignore when rescheduling (optional)
+ */
+
+/**
+ * @typedef {Object} GetAvailabilityResponse
+ * @property {string[]} available_dates - Days with at least one free slot, `YYYY-MM-DD`
+ * @property {string[]} disabled_dates - Days in the range with no free slot, `YYYY-MM-DD`
+ * @property {string} time_zone - Time zone the dates are expressed in
+ */
+
+/**
+ * @typedef {Object} GetTimeSlotsParams
+ * @property {string} bookingEventId - Booking event id from `variant.booking_event.id` (required)
+ * @property {string} date - Day to list slots for, `YYYY-MM-DD` (required)
+ * @property {string} [timeZone] - IANA time zone; defaults to the visitor's browser time zone
+ * @property {string} [excludeBookingId] - Existing booking to ignore when rescheduling (optional)
+ */
+
+/**
+ * @typedef {Object} GetTimeSlotsResponse
+ * @property {string[]} slots - Free slot start times, `YYYY-MM-DDTHH:mm:ss`; pass one verbatim as `time_slot`
+ * @property {string} time_zone - Time zone the slots are expressed in
  */
 
 /**
@@ -692,6 +724,127 @@ export async function getCategories() {
   };
 }
 
+const getBrowserTimeZone = () =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
+/**
+ * POST /store/availability - Booking Availability Endpoint
+ * @function getAvailability
+ * @static
+ * @operationId GetBookingAvailability
+ * @summary Retrieve bookable days
+ * @description Lists which days in a date range still have a free slot for a booking event. Not store-scoped.
+ * @group Booking
+ *
+ * @param {GetAvailabilityParams} params - Request parameters
+ * @param {string} params.bookingEventId - Booking event id from `variant.booking_event.id` (required)
+ * @param {string} params.fromDate - First day of the range, `YYYY-MM-DD` (required)
+ * @param {string} params.toDate - Last day of the range, `YYYY-MM-DD` (required)
+ * @param {string} [params.timeZone] - IANA time zone; defaults to the visitor's browser time zone
+ * @param {string} [params.excludeBookingId] - Existing booking to ignore when rescheduling (optional)
+ *
+ * @returns {Promise<GetAvailabilityResponse>} Available and disabled days for the range
+ *
+ * @example
+ * const { available_dates } = await getAvailability({
+ *   bookingEventId: variant.booking_event.id,
+ *   fromDate: "2026-09-01",
+ *   toDate: "2026-09-30"
+ * });
+ */
+export async function getAvailability({
+  bookingEventId,
+  fromDate,
+  toDate,
+  timeZone,
+  excludeBookingId,
+}) {
+  const url = `${ECOMMERCE_API_URL}/store/availability`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      booking_event_id: bookingEventId,
+      from_date: fromDate,
+      to_date: toDate,
+      time_zone: timeZone || getBrowserTimeZone(),
+      ...(excludeBookingId ? { exclude_booking_id: excludeBookingId } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    available_dates: data.available_dates || [],
+    disabled_dates: data.disabled_dates || [],
+    time_zone: data.time_zone,
+  };
+}
+
+/**
+ * POST /store/time-slots - Booking Time Slots Endpoint
+ * @function getTimeSlots
+ * @static
+ * @operationId GetDayTimeSlots
+ * @summary Retrieve free slots for one day
+ * @description Lists the free appointment start times for a booking event on a single day. Not store-scoped.
+ * @group Booking
+ *
+ * @param {GetTimeSlotsParams} params - Request parameters
+ * @param {string} params.bookingEventId - Booking event id from `variant.booking_event.id` (required)
+ * @param {string} params.date - Day to list slots for, `YYYY-MM-DD` (required)
+ * @param {string} [params.timeZone] - IANA time zone; defaults to the visitor's browser time zone
+ * @param {string} [params.excludeBookingId] - Existing booking to ignore when rescheduling (optional)
+ *
+ * @returns {Promise<GetTimeSlotsResponse>} Free slot start times for the day
+ *
+ * @example
+ * const { slots, time_zone } = await getTimeSlots({
+ *   bookingEventId: variant.booking_event.id,
+ *   date: "2026-09-14"
+ * });
+ * // slots[0] === "2026-09-14T10:00:00" -> pass verbatim as items[0].time_slot
+ */
+export async function getTimeSlots({
+  bookingEventId,
+  date,
+  timeZone,
+  excludeBookingId,
+}) {
+  const url = `${ECOMMERCE_API_URL}/store/time-slots`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      booking_event_id: bookingEventId,
+      date,
+      time_zone: timeZone || getBrowserTimeZone(),
+      ...(excludeBookingId ? { exclude_booking_id: excludeBookingId } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    slots: data.slots || [],
+    time_zone: data.time_zone,
+  };
+}
+
 async function getCheckoutLanguage() {
   const response = await fetch(
     `${ECOMMERCE_API_URL}/store/${ECOMMERCE_STORE_ID}/settings`,
@@ -727,6 +880,8 @@ async function getCheckoutLanguage() {
  * @param {CheckoutItemCustomFieldValue[]} [params.items[].custom_field_values] - Array of custom field values for this item
  * @param {string} params.items[].custom_field_values[].custom_field_id - Custom field id (required if custom_field_values provided)
  * @param {string} params.items[].custom_field_values[].value - Custom field value (required if custom_field_values provided)
+ * @param {string} [params.items[].time_slot] - Chosen appointment start, `YYYY-MM-DDTHH:mm:ss` (required for booking variants)
+ * @param {string} [params.items[].time_zone] - IANA time zone the `time_slot` is expressed in (required for booking variants)
  * @param {string} params.successUrl - Success redirect URL
  * @param {string} params.cancelUrl - Cancel redirect URL
  * @param {string} [params.locale] - Checkout locale (e.g. en, es, fr)
@@ -773,7 +928,7 @@ export async function initializeCheckout({
       successUrl,
       cancelUrl,
       locale,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timeZone: getBrowserTimeZone(),
       customer,
     }),
   });
@@ -784,7 +939,10 @@ export async function initializeCheckout({
   ]);
 
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+    // Booking slot conflicts are only distinguishable from the body: "Booking time slot not available".
+    error.response = await response.json().catch(() => null);
+    throw error;
   }
 
   const data = await response.json();

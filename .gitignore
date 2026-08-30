@@ -1,0 +1,64 @@
+# =============================================================================
+# MEU CMO — .gitignore
+# =============================================================================
+
+# --- Dependências (instaladas via npm install, não versionadas) ---
+node_modules/
+**/node_modules/
+
+# --- Builds / artefatos gerados ---
+dist/
+**/dist/
+build/
+**/build/
+*.tsbuildinfo
+
+# --- Vite (cache de otimização de deps) ---
+**/.vite/
+
+# --- PocketBase (banco local + snapshots — NUNCA versionar dados) ---
+apps/pocketbase/pb_data/
+apps/pocketbase/pb_snapshots/
+pb_data/
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# --- Variáveis de ambiente / segredos ---
+.env
+.env.local
+.env.*.local
+apps/api/.env
+apps/web/.env
+!/.env.example
+!apps/api/.env.example
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+
+# --- Sistema operacional / editores ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- Arquivos compactados temporários ---
+*.tar.gz
+*.zip
+app.tar.gz
+
+# --- Cache de testes / cobertura ---
+coverage/
+.nyc_output/
+
+# --- Temporários da plataforma ---
+vault/temp/
