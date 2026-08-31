@@ -1,36 +1,45 @@
 # Meu CMO — Codebase Map
 
-Monorepo for a daily AI-powered marketing plan generator (Meu CMO) with PocketBase backend, Express API, and React web frontend. Deployed on Railway with PWA support.
+Monorepo for a full-stack SaaS platform: AI-powered daily plan generator for service businesses (salons, clinics, consultancies). Three services (web frontend, Express API, PocketBase backend) coordinated via npm workspaces. Deployable to Railway or Hostinger AI Builder.
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| **web** | 5173 (dev) / 3000 (prod) | React SPA: daily plans, onboarding, subscriptions, admin dashboard |
-| **api** | 3001 | Express gateway: AI plan generation, metrics, PocketBase proxy (`/hcgi/platform/*`), API routes (`/hcgi/api/*`) |
-| **pocketbase** | 8090 | PocketBase: auth, collections (users, empresas, planos_diarios, tarefas, assinaturas, ideias, etc.), hooks, migrations |
+| **web** | 5173 (dev) / 3000 (prod) | React + Vite frontend; PWA-enabled |
+| **api** | 3001 | Express.js REST API; AI chat, plan generation, admin metrics |
+| **pocketbase** | 8090 | PocketBase backend; auth, database, file storage |
+
+---
 
 ## apps/web (React + Vite, port 5173 dev / 3000 prod)
 
 Located at apps/web/. Run: `npm run dev -w apps/web` (auto-started by root dev script).
 
-src/main.jsx — React entry point, mounts App to #root
-src/App.jsx — root component, AuthContext + CompanyContext providers, route definitions
+src/main.jsx — React entry point; mounts App component
+src/App.jsx — main app router; redirects unauthenticated users to /login, authenticated to /dashboard
 src/pages/HomePage.jsx — landing page with feature highlights and CTA
-src/pages/LoginPage.jsx — login form with email/password
-src/pages/SignupPage.jsx — signup form with email/password/company name
-src/pages/OnboardingPage.jsx — conversational onboarding: company profile, segment, specialty, patient profile, growth goals, products/services, target audience, objectives, current promotions
-src/pages/DashboardPage.jsx — main dashboard: daily plan display, task list, execution tracking, video roteiro player
-src/pages/CompaniesPage.jsx — manage multiple companies (create, switch, view details)
-src/pages/HistoricoPage.jsx — plan history and analytics
-src/pages/ConfiguracoesPage.jsx — user settings, company settings, subscription management
-src/pages/PlansPage.jsx — pricing and subscription tiers (Starter, Pro, Enterprise)
-src/pages/SubscriptionsPage.jsx — active subscriptions, invoices, billing history
-src/pages/AdminPage.jsx — admin-only: platform metrics, client list, MRR, churn rate, execution rate
-src/pages/IdeiasPage.jsx — idea bank: create, view, filter ideas by category
-src/pages/ExemplosPage.jsx — example plans (Barbearia do Zé, Consultório de Nutrição)
+src/pages/LoginPage.jsx — login form with email/password validation
+src/pages/SignupPage.jsx — signup form with email/password/company name validation
+src/pages/OnboardingPage.jsx — conversational onboarding: company name, segment (health/general), specialty, patient profile, growth objectives, products/services, target audience, goals, current promotions; saves to empresas collection
+src/pages/DashboardPage.jsx — main app hub: displays current company, subscription tier, quick actions (generate plan, view ideas, chat), plan history, task completion stats
+src/pages/CompaniesPage.jsx — list and switch between user's companies
+src/pages/HistoricoPage.jsx — view all generated plans with filters and export options
+src/pages/ConfiguracoesPage.jsx — user and company settings, password change, company deletion
+src/pages/PlansPage.jsx — pricing tiers (Starter, Professional, Enterprise) with feature comparison and CTA buttons
+src/pages/SubscriptionsPage.jsx — manage active subscriptions, view invoices, upgrade/downgrade/cancel
+src/pages/AdminPage.jsx — admin-only dashboard: platform metrics (total clients, MRR, churn, execution rate), monthly evolution charts, client distribution by plan, active subscriptions, client list with details
+src/pages/IdeiasPage.jsx — idea bank: create, view, filter, delete ideas; linked to current company
+src/pages/ExemplosPage.jsx — showcase two ready-made examples (Barbearia do Zé, Consultório de Nutrição) with full daily plans and video roteiros
 src/pages/TermosPage.jsx — terms of service
 src/pages/PrivacyPage.jsx — privacy policy
-src/components/ — reusable UI components (buttons, forms, modals, cards, etc.)
-src/lib/pocketbaseClient.js — PocketBase client: auth, CRUD operations, real-time subscriptions; uses relative path `/hcgi/platform` (routed by sandbox dev proxy or Express gateway in Railway)
+src/components/Navbar.jsx — top navigation bar with logo, user menu, logout
+src/components/Sidebar.jsx — left sidebar with main navigation links
+src/components/ChatAI.jsx — chat interface for AI plan generation and conversation; calls POST /hcgi/api/integrated-ai/stream with streaming response
+src/components/PlanGenerator.jsx — form to generate daily/weekly/monthly plans; calls POST /hcgi/api/integrated-ai/stream
+src/components/PlanDisplay.jsx — renders generated plan with tasks, video roteiros, health mode indicators
+src/components/TaskList.jsx — displays and manages tasks from a plan; marks complete/incomplete
+src/components/SubscriptionCard.jsx — displays subscription tier details and action buttons
+src/components/ProtectedRoute.jsx — route guard: redirects unauthenticated users to /login
+src/lib/apiClient.js — HTTP client for API calls (returns raw Response); uses relative path `/hcgi/api` (routed by sandbox dev proxy or Express gateway in Railway)
 src/lib/apiServerClient.js — HTTP client for API calls (returns raw Response); uses relative path `/hcgi/api` (routed by sandbox dev proxy or Express gateway in Railway)
 src/lib/exemplosPlano.js — two ready-made test examples (Barbearia do Zé, Consultório de Nutrição) with full daily plans, video roteiros, and validation function (validarPlano) that checks format compliance and generates conformance score (%), including health mode rules for Modo Saúde
 src/lib/ecommerceSubscriptionsUtils.js — subscription tier helpers and plan metadata

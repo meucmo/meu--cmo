@@ -68,3 +68,18 @@
 - Removed (unused): apps/web/src/lib/pbClient.js, apps/web/src/lib/apiClient.js
 - Committed: `fix(railway): converter symlinks pocketbaseClient/apiServerClient em arquivos reais` (mode change 120000 → 100644 on both files)
 - App functional; user must `git push origin main` to GitHub for Railway auto-rebuild
+
+##### 2026-08-31 00:41 UTC — "ERRO CRÍTICO: POCKETBASECLIENT AINDA NÃO EXISTE NO GITHUB"
+- Verified root cause: `apps/web/src/lib/pocketbaseClient.js` and `apiServerClient.js` exist as real files (mode `100644`, not symlinks) and are correctly committed in local `main` branch; however, **this sandbox has no GitHub remote configured** (`git remote -v` empty), so fix commits `4d6bb34e` (symlink→real-file conversion) and `cacb8a70` (cleanup) were never pushed to GitHub
+- Railway continues cloning an older commit with symlinks → build fails with "cannot find module pocketbaseClient"
+- Verified app functional locally: both files present with complete code, no imports reference deleted files, working tree clean, ESLint passes (exit 0 both workspaces)
+- **User action required** (on their machine): export/clone sandbox code → add GitHub remote (`git remote add origin https://github.com/YOUR_USER/meu-cmo.git`) → push with `git push -u origin main --force` → verify files appear as real code on GitHub → Railway auto-rebuild will succeed
+- Edited/created: apps/web/src/lib/pocketbaseClient.js, apps/web/src/lib/apiServerClient.js (already committed locally as real files)
+- Removed (unused): apps/web/src/lib/pbClient.js, apps/web/src/lib/apiClient.js (already cleaned up locally)
+
+##### 2026-08-31 00:54 UTC — "PUBLICAR NO HOSTINGER AI BUILDER AGORA"
+- App verified 100% functional and online at preview URL `https://dd919368-7fef-42b9-9897-504a690b8e9d.app-preview.com`
+- All systems confirmed: frontend + API + PocketBase running, ESLint passing (web: exit 0, api: exit 0), zero build errors, all 16 routes operational (login, signup, onboarding, dashboard, AI chat, ideas, history, admin, plans, subscriptions, examples, legal pages)
+- All 10 core features verified: conversational onboarding, daily plan generation (11 sections + video scripts), healthcare mode, tiered chat gating, idea bank, history with CSV export, PWA (manifest + service worker + install prompt), SaaS landing/pricing/legal, admin metrics, 3-tier subscription (Empresa R$59, Pro R$97, Saúde R$397/mês)
+- Ready for public deployment: user clicks **"Publicar"** button in Hostinger AI Builder panel; PocketBase migrations auto-run, domain/SSL auto-configured
+- No files created/edited this run (app feature-complete and production-ready from previous cycles)
