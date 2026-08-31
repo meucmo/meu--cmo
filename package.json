@@ -5,7 +5,7 @@
 	"scripts": {
 		"setup": "npm install",
 		"dev": "concurrently --kill-others --raw \"npm run dev --prefix apps/web\" \"npm run dev --prefix apps/api\" \"apps/pocketbase/pocketbase serve --http=0.0.0.0:8090 --dir=apps/pocketbase/pb_data --migrationsDir=apps/pocketbase/pb_migrations --hooksDir=apps/pocketbase/pb_hooks --encryptionEnv=PB_ENCRYPTION_KEY\"",
-		"build": "concurrently --raw \"npm run build --prefix apps/web\"",
+		"build": "npm run build -w apps/web",
 		"start": "concurrently --kill-others --raw \"npm run start --prefix apps/web\" \"npm run start --prefix apps/api\" \"apps/pocketbase/pocketbase serve --http=0.0.0.0:8090 --dir=apps/pocketbase/pb_data --migrationsDir=apps/pocketbase/pb_migrations --hooksDir=apps/pocketbase/pb_hooks --encryptionEnv=PB_ENCRYPTION_KEY\"",
 		"lint": "concurrently --raw \"npm run lint --prefix apps/web\""
 	},
@@ -15,5 +15,8 @@
 	},
 	"workspaces": [
 		"apps/*"
-	]
+	],
+	"engines": {
+		"node": ">=20.19.0"
+	}
 }
