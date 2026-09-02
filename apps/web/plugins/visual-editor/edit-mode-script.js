@@ -10,7 +10,7 @@ import { handleDraftSave, handleDraftDiscard, discardAllEdits } from "./api/draf
 import { applyDraftSnapshot, notifyDraftStateChanged } from "./api/draft-snapshot.js";
 import { patchReactDomMutations } from "./utils/html-utils.js";
 import { showTypeTooltip, hideTypeTooltip } from "./ui/overlays/type-tooltip.js";
-import { openOrCreateAnnotation, getAnnotationPanelEl, hideAnnotationPanel, openPanelForEdit } from "./ui/annotation-panel/panel.js";
+import { openOrCreateAnnotation, getAnnotationPanelEl, hideAnnotationPanel, openPanelForEdit, addPendingAttachments } from "./ui/annotation-panel/panel.js";
 import { clearAllAnnotationMarkers, refreshAnnotationMarkers } from "./ui/annotation-panel/annotation-markers.js";
 import { setEditorTranslations, setComments, getPendingElements } from "./state/annotation-state.js";
 import { captureElementMetadata } from "./utils/selection-mode-metadata.js";
@@ -755,6 +755,10 @@ window.addEventListener("message", function (event) {
 
 	if (event.data?.type === ChildMessage.EDIT_REDO) {
 		applySessionRedo();
+	}
+
+	if (event.data?.type === ChildMessage.ANNOTATION_IMAGE_ATTACHED) {
+		addPendingAttachments(event.data?.payload?.attachments);
 	}
 
 	if (event.data?.type === ChildMessage.ANNOTATION_OPEN_FOR_IMAGE) {

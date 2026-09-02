@@ -13,6 +13,8 @@ export const ParentMessage = {
 	DRAFT_SAVE_FINISHED: 'draftSaveFinished',
 	DRAFT_DISCARDED: 'draftDiscarded',
 	ANNOTATION_PANEL_OPENED: 'annotationPanelOpened',
+	ANNOTATION_IMAGE_ATTACH_REQUESTED: 'annotationImageAttachRequested',
+	ANNOTATION_IMAGE_REMOVED: 'annotationImageRemoved',
 }
 
 /** Message types sent from the parent Horizons frame to the iframe. */
@@ -28,4 +30,5 @@ export const ChildMessage = {
 	EDIT_REDO: 'edit-redo',
 	EDIT_CANCEL: 'edit-cancel',
 	ANNOTATION_OPEN_FOR_IMAGE: 'annotation-open-for-image',
+	ANNOTATION_IMAGE_ATTACHED: 'annotation-image-attached',
 }

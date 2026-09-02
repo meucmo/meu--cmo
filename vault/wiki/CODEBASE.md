@@ -1,51 +1,44 @@
 # Meu CMO — Codebase Map
 
-Monorepo for a full-stack SaaS platform: AI-powered daily plan generator for service businesses (salons, clinics, consultancies). Three services (web frontend, Express API, PocketBase backend) coordinated via npm workspaces. Deployable to Railway or Hostinger AI Builder.
+Monorepo (npm workspaces) with frontend (React/Vite), backend API (Express.js), and PocketBase database. All services auto-start via root `npm run dev`. Deploy to Railway or Netlify.
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| **web** | 5173 (dev) / 3000 (prod) | React + Vite frontend; PWA-enabled |
-| **api** | 3001 | Express.js REST API; AI chat, plan generation, admin metrics |
-| **pocketbase** | 8090 | PocketBase backend; auth, database, file storage |
+| **apps/web** | 5173 | React frontend: SPA with auth, dashboard, plan generation, subscriptions |
+| **apps/api** | 3001 | Express.js backend: AI integration, admin metrics, auth middleware |
+| **apps/pocketbase** | 8090 | PocketBase database: users, companies, plans, tasks, subscriptions, chat |
 
----
-
-## apps/web (React + Vite, port 5173 dev / 3000 prod)
+## apps/web (React + Vite, port 5173)
 
 Located at apps/web/. Run: `npm run dev -w apps/web` (auto-started by root dev script).
 
-src/main.jsx — React entry point; mounts App component
-src/App.jsx — main app router; redirects unauthenticated users to /login, authenticated to /dashboard
-src/pages/HomePage.jsx — landing page with feature highlights and CTA
-src/pages/LoginPage.jsx — login form with email/password validation
-src/pages/SignupPage.jsx — signup form with email/password/company name validation
-src/pages/OnboardingPage.jsx — conversational onboarding: company name, segment (health/general), specialty, patient profile, growth objectives, products/services, target audience, goals, current promotions; saves to empresas collection
-src/pages/DashboardPage.jsx — main app hub: displays current company, subscription tier, quick actions (generate plan, view ideas, chat), plan history, task completion stats
-src/pages/CompaniesPage.jsx — list and switch between user's companies
-src/pages/HistoricoPage.jsx — view all generated plans with filters and export options
-src/pages/ConfiguracoesPage.jsx — user and company settings, password change, company deletion
-src/pages/PlansPage.jsx — pricing tiers (Starter, Professional, Enterprise) with feature comparison and CTA buttons
-src/pages/SubscriptionsPage.jsx — manage active subscriptions, view invoices, upgrade/downgrade/cancel
-src/pages/AdminPage.jsx — admin-only dashboard: platform metrics (total clients, MRR, churn, execution rate), monthly evolution charts, client distribution by plan, active subscriptions, client list with details
-src/pages/IdeiasPage.jsx — idea bank: create, view, filter, delete ideas; linked to current company
-src/pages/ExemplosPage.jsx — showcase two ready-made examples (Barbearia do Zé, Consultório de Nutrição) with full daily plans and video roteiros
+src/main.jsx — React entry point, renders App component
+src/App.jsx — main router, layout wrapper, theme provider
+src/contexts/AuthContext.jsx — authentication state, login/signup/logout, user role checks
+src/pages/HomePage.jsx — landing page
+src/pages/LoginPage.jsx — login form
+src/pages/SignupPage.jsx — signup form
+src/pages/OnboardingPage.jsx — conversational onboarding (company profile, segment, specialty, goals)
+src/pages/DashboardPage.jsx — main dashboard: daily plan display, task execution, chat sidebar
+src/pages/CompaniesPage.jsx — company management
+src/pages/HistoricoPage.jsx — plan history and execution analytics
+src/pages/ConfiguracoesPage.jsx — user settings and preferences
+src/pages/PlansPage.jsx — subscription plans display
+src/pages/SubscriptionsPage.jsx — subscription management and invoices
+src/pages/AdminPage.jsx — admin metrics dashboard
+src/pages/IdeiasPage.jsx — idea bank (CRUD)
 src/pages/TermosPage.jsx — terms of service
 src/pages/PrivacyPage.jsx — privacy policy
-src/components/Navbar.jsx — top navigation bar with logo, user menu, logout
-src/components/Sidebar.jsx — left sidebar with main navigation links
-src/components/ChatAI.jsx — chat interface for AI plan generation and conversation; calls POST /hcgi/api/integrated-ai/stream with streaming response
-src/components/PlanGenerator.jsx — form to generate daily/weekly/monthly plans; calls POST /hcgi/api/integrated-ai/stream
-src/components/PlanDisplay.jsx — renders generated plan with tasks, video roteiros, health mode indicators
-src/components/TaskList.jsx — displays and manages tasks from a plan; marks complete/incomplete
-src/components/SubscriptionCard.jsx — displays subscription tier details and action buttons
-src/components/ProtectedRoute.jsx — route guard: redirects unauthenticated users to /login
-src/lib/apiClient.js — HTTP client for API calls (returns raw Response); uses relative path `/hcgi/api` (routed by sandbox dev proxy or Express gateway in Railway)
+src/pages/ExemplosPage.jsx — example plans (Barbearia do Zé, Consultório de Nutrição)
+src/components/ — reusable UI components (buttons, forms, modals, cards, etc.)
+src/hooks/useAuth.js — auth state hook
+src/hooks/usePocketBase.js — PocketBase client hook
+src/hooks/useSubscription.js — subscription state and plan limit checks
+src/lib/pocketbaseClient.js — PocketBase client initialization and export
 src/lib/apiServerClient.js — HTTP client for API calls (returns raw Response); uses relative path `/hcgi/api` (routed by sandbox dev proxy or Express gateway in Railway)
 src/lib/exemplosPlano.js — two ready-made test examples (Barbearia do Zé, Consultório de Nutrição) with full daily plans, video roteiros, and validation function (validarPlano) that checks format compliance and generates conformance score (%), including health mode rules for Modo Saúde
 src/lib/ecommerceSubscriptionsUtils.js — subscription tier helpers and plan metadata
 src/config/subscriptionRoutes.js — subscription routes configuration
-src/contexts/AuthContext.jsx — user authentication state (login, signup, logout, session)
-src/contexts/CompanyContext.jsx — current company and subscription state
 src/api/InternalEcommerceSubscriptionsApi.js — API client for platform's built-in subscription management (list, get, create, update, cancel subscriptions; fetch invoices; check plan limits)
 public/manifest.json — PWA manifest: app name "Meu CMO", description, icons (192/512 maskable + any), theme colors (teal light/dark), standalone display, portrait orientation, Android screenshot, app shortcuts
 public/service-worker.js — PWA service worker: cache-first for static assets (JS/CSS/icons/fonts), network-first for API and navigation, auto-versioned cache cleanup, skipWaiting for instant updates; excludes `/node_modules/.vite/deps/` from cache (always network) to prevent stale Vite dev chunks

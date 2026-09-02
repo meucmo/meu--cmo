@@ -335,6 +335,7 @@ export function importAnnotationMarkers(serialized, onMarkerClick) {
 		elements: [],
 		selections: annotation.targets.map(target => target.selection).filter(Boolean),
 		text: annotation.text ?? '',
+		attachments: Array.isArray(annotation.attachments) ? annotation.attachments : [],
 		clickX: annotation.clickX ?? 0,
 		clickY: annotation.clickY ?? 0,
 		fixed: !!annotation.fixed,
@@ -351,6 +352,7 @@ export function importAnnotationMarkers(serialized, onMarkerClick) {
  *   targets: Array<{editId: string|null, anchor: object|null, selection: object|null}>,
  *   text: string, clickX: number, clickY: number,
  *   relativeX: number, relativeY: number, fixed: boolean, route: string,
+ *   attachments: Array<{url: string, fileName: string, size: number}>,
  * }>}
  */
 export function exportAnnotationMarkers() {
@@ -363,6 +365,7 @@ export function exportAnnotationMarkers() {
 		relativeY: entry.relativeY,
 		fixed: entry.fixed,
 		route: entry.route,
+		attachments: entry.comment.attachments ?? [],
 	}));
 }
 

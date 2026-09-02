@@ -70,7 +70,70 @@ export const ANNOTATION_PANEL_STYLES = `
 		align-items: center;
 	}
 
+	#selection-mode-annotation-attachments {
+		display: none;
+		flex-wrap: wrap;
+		gap: 4px;
+
+		&.active {
+			display: flex;
+		}
+	}
+
+	.selection-mode-annotation-attachment {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		max-width: 100%;
+		padding: 2px 4px 2px 8px;
+		border: 1px solid ${BORDER_COLOR};
+		border-radius: 8px;
+		background: ${PANEL_INPUT_BG};
+		box-sizing: border-box;
+	}
+
+	.selection-mode-annotation-attachment-name {
+		max-width: 180px;
+		color: ${COLOR_WHITE};
+		font-size: 12px;
+		line-height: 20px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.selection-mode-annotation-attachment-remove {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px;
+		border-radius: 4px;
+		width: 20px;
+		height: 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		box-sizing: border-box;
+
+		& svg {
+			width: 12px;
+			height: 12px;
+		}
+
+		&:hover {
+			background: ${HOVER_BG};
+		}
+	}
+
+	#selection-mode-annotation-actions {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
 	#selection-mode-discard-btn,
+	#selection-mode-attach-image-btn,
 	#selection-mode-delete-btn {
 		background: none;
 		border: none;
@@ -87,8 +150,36 @@ export const ANNOTATION_PANEL_STYLES = `
 	}
 
 	#selection-mode-discard-btn:hover,
+	#selection-mode-attach-image-btn:hover:not(:disabled),
 	#selection-mode-delete-btn:hover {
 		background: ${HOVER_BG};
+	}
+
+	#selection-mode-attach-image-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	#selection-mode-attach-image-btn.is-loading:disabled {
+		opacity: 1;
+		cursor: wait;
+	}
+
+	/* Mirrors horizons-frontend Spinner.vue (w-4 border-1 border-light border-t-transparent, 2s spin). */
+	.selection-mode-attach-spinner {
+		box-sizing: border-box;
+		width: 16px;
+		height: 16px;
+		border-radius: 9999px;
+		border: 1px solid ${COLOR_WHITE};
+		border-top-color: transparent;
+		animation: selection-mode-attach-spin 2s linear infinite;
+	}
+
+	@keyframes selection-mode-attach-spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	#selection-mode-delete-wrapper {
