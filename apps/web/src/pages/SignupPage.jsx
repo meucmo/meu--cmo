@@ -45,8 +45,23 @@ export default function SignupPage() {
 			});
 			navigate('/onboarding', { replace: true });
 		} catch (err) {
-			const emailError = err?.response?.data?.email?.message;
-			setError(emailError ? 'Este e-mail já está em uso. Tente entrar na sua conta.' : 'Não foi possível criar sua conta. Tente novamente.');
+			const status = err?.status ?? 0;
+			const data = err?.response?.data || {};
+			const emailError = data.email?.message;
+
+			if (status === 0) {
+				setError('Sem conexão com o servidor. Verifique sua internet e tente novamente em alguns segundos.');
+			} else if (status === 429) {
+				setError('Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.');
+			} else if (emailError) {
+				setError('Este e-mail já está em uso. Tente entrar na sua conta.');
+			} else if (data.password?.message) {
+				setError('A senha não atende aos requisitos. Use ao menos 8 caracteres.');
+			} else if (data.email?.code || data.email) {
+				setError('E-mail inválido. Confira o endereço digitado.');
+			} else {
+				setError('Não foi possível criar sua conta agora. Tente novamente em instantes.');
+			}
 		} finally {
 			setLoading(false);
 		}
