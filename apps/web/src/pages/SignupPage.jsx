@@ -45,22 +45,74 @@ export default function SignupPage() {
 			});
 			navigate('/onboarding', { replace: true });
 		} catch (err) {
-			const status = err?.status ?? 0;
-			const data = err?.response?.data || {};
-			const emailError = data.email?.message;
+			// Conta criada no servidor, mas o login automático falhou.
+			if (err?.accountCreated) {
+				toast({
+					title: 'Conta criada!',
+					description: 'Sua conta existe. Entre com o e-mail e a senha para continuar.',
+				});
+				navigate('/login', { replace: true });
+				return;
+			}
 
-			if (status === 0) {
-				setError('Sem conexão com o servidor. Verifique sua internet e tente novamente em alguns segundos.');
+			// PocketBase ClientResponseError: body em err.response; campos em err.response.data
+			const body = (err && typeof err.response === 'object' && err.response) || {};
+			const fields = (body && typeof body.data === 'object' && body.data) || {};
+			const status = Number(err?.status ?? body?.status ?? 0) || 0;
+			const code = body?.code || fields?.code || '';
+			const serverMsg =
+				(typeof body.message === 'string' && body.message) ||
+				(typeof err?.message === 'string' && err.message && !String(err.message).startsWith('ClientResponseError')
+					? err.message
+					: '') ||
+				'';
+			const emailField = fields.email;
+			const passwordField = fields.password || fields.passwordConfirm;
+			const emailMsg = emailField?.message || '';
+			const emailCode = emailField?.code || '';
+			const looksLikeHtml =
+				typeof serverMsg === 'string' && /<!doctype html>|<html/i.test(serverMsg);
+
+			if (status === 0 || err?.isAbort) {
+				setError(
+					'Sem conexão com o servidor de contas. Confira sua internet e se o backend (PocketBase) está no ar; tente de novo em alguns segundos.',
+				);
+			} else if (
+				status === 502 ||
+				status === 503 ||
+				code === 'backend_not_configured' ||
+				code === 'backend_unreachable' ||
+				code === 'backend_url_invalid'
+			) {
+				setError(
+					serverMsg ||
+						'O servidor de contas está indisponível. No site publicado, confira se o backend no Railway está online e se RAILWAY_BACKEND_URL está definida na Netlify; depois faça um novo deploy.',
+				);
+			} else if (status === 404 || looksLikeHtml) {
+				setError(
+					'O backend de cadastro não respondeu neste domínio (rota /hcgi/platform). No site publicado, configure RAILWAY_BACKEND_URL na Netlify apontando para o Railway e publique de novo. No preview Hostinger o serviço precisa estar ativo.',
+				);
 			} else if (status === 429) {
 				setError('Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.');
-			} else if (emailError) {
+			} else if (
+				emailCode === 'validation_not_unique' ||
+				/unique|already|já está|in use/i.test(emailMsg)
+			) {
 				setError('Este e-mail já está em uso. Tente entrar na sua conta.');
-			} else if (data.password?.message) {
+			} else if (passwordField?.message) {
 				setError('A senha não atende aos requisitos. Use ao menos 8 caracteres.');
-			} else if (data.email?.code || data.email) {
-				setError('E-mail inválido. Confira o endereço digitado.');
+			} else if (emailCode || emailField) {
+				setError(emailMsg || 'E-mail inválido. Confira o endereço digitado.');
+			} else if (status >= 500) {
+				setError(
+					'O servidor de contas falhou ao processar o cadastro. Tente novamente em instantes. Se o erro continuar no site publicado, confira o Railway e o envio de e-mail.',
+				);
 			} else {
-				setError('Não foi possível criar sua conta agora. Tente novamente em instantes.');
+				setError(
+					serverMsg && !looksLikeHtml
+						? `Não foi possível criar sua conta: ${serverMsg}`
+						: 'Não foi possível criar sua conta agora. Tente novamente em instantes.',
+				);
 			}
 		} finally {
 			setLoading(false);

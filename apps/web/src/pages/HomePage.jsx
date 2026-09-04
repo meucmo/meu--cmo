@@ -639,6 +639,7 @@ const HomePage = () => {
 							<ul className="mt-3 space-y-2 text-sm">
 								<li><Link to="/termos" className="text-muted-foreground transition-colors hover:text-foreground">Termos de Serviço</Link></li>
 								<li><Link to="/privacidade" className="text-muted-foreground transition-colors hover:text-foreground">Política de Privacidade</Link></li>
+								<li><Link to="/?migracao=1" className="text-muted-foreground transition-colors hover:text-foreground">Validação da migração</Link></li>
 							</ul>
 						</div>
 					</div>

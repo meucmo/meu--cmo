@@ -16,13 +16,26 @@ export function AuthProvider({ children }) {
 	const login = (email, password) => pb.collection('users').authWithPassword(email, password);
 
 	const signup = async ({ name, email, password }) => {
-		await pb.collection('users').create({
+		const payload = {
 			name,
 			email,
 			password,
 			passwordConfirm: password,
-		});
-		return pb.collection('users').authWithPassword(email, password);
+			role: 'customer',
+			emailVisibility: false,
+		};
+		// Evita cancelamento automático do SDK se houver request em paralelo.
+		await pb.collection('users').create(payload, { requestKey: `signup-create-${email}` });
+		try {
+			return await pb.collection('users').authWithPassword(email, password, {
+				requestKey: `signup-auth-${email}`,
+			});
+		} catch (authErr) {
+			// Conta já existe no servidor; o login falhou por outro motivo.
+			const enriched = authErr || new Error('Falha ao entrar após criar a conta');
+			enriched.accountCreated = true;
+			throw enriched;
+		}
 	};
 
 	const logout = () => pb.authStore.clear();

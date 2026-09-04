@@ -1,0 +1,6 @@
+# Proxies /hcgi são gerados no build (write-netlify-redirects.js).
+# SPA: deep links do React (forçado) — evita 404 da Netlify.
+/migracao-test    /index.html   200!
+/migracao-test/   /index.html   200!
+/migracao-test.html /index.html 200!
+/*    /index.html   200

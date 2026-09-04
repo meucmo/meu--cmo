@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes, BrowserRouter as Router, Navigate } from 'react-router-dom';
+import { Route, Routes, BrowserRouter as Router, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SubscriptionAuthProvider } from '@/contexts/SubscriptionAuthContext.jsx';
@@ -21,6 +21,17 @@ import ExemplosPage from '@/pages/ExemplosPage.jsx';
 import IdeiasPage from '@/pages/IdeiasPage.jsx';
 import TermosPage from '@/pages/TermosPage.jsx';
 import PrivacyPage from '@/pages/PrivacyPage.jsx';
+import MigracaoTestPage from '@/pages/MigracaoTestPage.jsx';
+
+/** Home com fallback ?migracao=1 (funciona sem rewrite SPA na Netlify). */
+function HomeOrMigracao() {
+	const { search } = useLocation();
+	const q = new URLSearchParams(search);
+	if (q.get('migracao') === '1' || q.get('migracao') === 'test') {
+		return <MigracaoTestPage />;
+	}
+	return <HomePage />;
+}
 
 function App() {
 	return (
@@ -30,7 +41,11 @@ function App() {
 					<Router>
 						<ScrollToTop />
 						<Routes>
-							<Route path="/" element={<HomePage />} />
+							<Route path="/" element={<HomeOrMigracao />} />
+							{/* Deep link + fallbacks se o host não aplicar SPA rewrite */}
+							<Route path="/migracao-test" element={<MigracaoTestPage />} />
+							<Route path="/migracao-test/" element={<MigracaoTestPage />} />
+							<Route path="/migracao-test.html" element={<MigracaoTestPage />} />
 							<Route path="/login" element={<LoginPage />} />
 							<Route path="/cadastro" element={<SignupPage />} />
 							<Route path="/plans" element={<PlansPage />} />

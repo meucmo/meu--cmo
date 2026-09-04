@@ -1,0 +1,55 @@
+# Configuração de deploy do Meu CMO na Netlify.
+#
+# ARQUITETURA
+# - Netlify serve o frontend estático (apps/web).
+# - PocketBase (/hcgi/platform) e Express (/hcgi/api) rodam no Railway.
+# - O edge function `backend-proxy` encaminha /hcgi/* para o Railway.
+#
+# OBRIGATÓRIO na Netlify → Site settings → Environment variables:
+#   RAILWAY_BACKEND_URL = https://SEU-SERVICO.up.railway.app
+#   (URL pública do Railway, SEM barra no final. Com ou sem https:// — o proxy normaliza.)
+#
+# Depois de criar/alterar a variável: Deploy → Trigger deploy → Clear cache and
+# deploy site. Sem isso o cadastro/login NÃO funcionam.
+
+[build]
+  base = "/"
+  command = "npm ci && NODE_OPTIONS=--max_old_space_size=4096 npm run build -w apps/web && node scripts/write-netlify-redirects.js"
+  publish = "dist/apps/web"
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Edge proxy: /hcgi/* → Railway (lê RAILWAY_BACKEND_URL em runtime)
+[[edge_functions]]
+  path = "/hcgi/*"
+  function = "backend-proxy"
+
+# Deep link de validação (forçado) — evita 404 da Netlify se o publish estiver certo
+[[redirects]]
+  from = "/migracao-test"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/migracao-test/"
+  to = "/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/migracao-test.html"
+  to = "/index.html"
+  status = 200
+  force = true
+
+# SPA fallback — demais deep links (/dashboard, etc.)
+# Edge /hcgi/* tem prioridade sobre este redirect
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true

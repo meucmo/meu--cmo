@@ -9,6 +9,64 @@ import logger from './utils/appLogger.js';
 const app = express();
 
 app.disable('x-powered-by');
+
+// CORS: permite o frontend na Netlify (meucmo.com) falar com o Railway
+// quando o proxy same-origin não estiver ativo. Em modo gateway (proxy
+// Netlify → Railway) o browser já é same-origin e o preflight nem ocorre.
+const defaultAllowedOrigins = [
+	'https://meucmo.com',
+	'https://www.meucmo.com',
+];
+const extraOrigins = String(process.env.CORS_ALLOWED_ORIGINS || '')
+	.split(',')
+	.map((s) => s.trim())
+	.filter(Boolean);
+const allowedOrigins = new Set([...defaultAllowedOrigins, ...extraOrigins]);
+
+app.use((req, res, next) => {
+	const origin = req.headers.origin;
+	if (origin && allowedOrigins.has(origin)) {
+		res.setHeader('Access-Control-Allow-Origin', origin);
+		res.setHeader('Access-Control-Allow-Credentials', 'true');
+		res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+		res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+		res.setHeader('Vary', 'Origin');
+	}
+	if (req.method === 'OPTIONS') {
+		return res.status(204).end();
+	}
+	return next();
+});
+
+// PocketBase SEMPRE em /hcgi/platform (Netlify edge → Railway).
+// Antes do body-parser para não consumir o stream do POST (cadastro/login).
+const pbTarget = process.env.POCKETBASE_INTERNAL_URL || 'http://localhost:8090';
+app.use(
+	'/hcgi/platform',
+	createProxyMiddleware({
+		target: pbTarget,
+		changeOrigin: true,
+		pathRewrite: { '^/hcgi/platform': '' },
+		ws: true,
+		on: {
+			error(err, _req, res) {
+				logger.error(`PocketBase proxy error: ${err && err.message ? err.message : err}`);
+				if (res && !res.headersSent) {
+					res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' });
+					res.end(
+						JSON.stringify({
+							code: 'pocketbase_unreachable',
+							message:
+								'Não foi possível falar com o PocketBase no Railway. Confira se o processo está no ar na porta 8090.',
+						}),
+					);
+				}
+			},
+		},
+	}),
+);
+logger.info(`PocketBase proxy /hcgi/platform → ${pbTarget}`);
+
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -19,28 +77,13 @@ const apiRouter = routes();
 app.use(apiRouter);
 app.use('/hcgi/api', apiRouter);
 
-// Self-hosted gateway mode: serve the built web app and proxy PocketBase on
-// the same origin so the web client's /hcgi/platform and /hcgi/api paths work.
-// Enable with SERVE_WEB=true (set on Railway). Off by default to preserve the
-// Hostinger platform behaviour.
+// Opcional: servir o frontend estático no mesmo host (SERVE_WEB=true).
 const SERVE_WEB = process.env.SERVE_WEB === 'true';
 
 if (SERVE_WEB) {
-	const pbTarget = process.env.POCKETBASE_INTERNAL_URL || 'http://localhost:8090';
-	app.use(
-		'/hcgi/platform',
-		createProxyMiddleware({
-			target: pbTarget,
-			changeOrigin: true,
-			pathRewrite: { '^/hcgi/platform': '' },
-			ws: true,
-		}),
-	);
-
 	const webDist = path.resolve(process.cwd(), '../../dist/apps/web');
 	if (fs.existsSync(webDist)) {
 		app.use(express.static(webDist));
-		// SPA fallback: any non-API, non-file route returns index.html
 		app.get('*', (req, res, next) => {
 			if (req.path.startsWith('/hcgi/')) return next();
 			res.sendFile(path.join(webDist, 'index.html'));
